@@ -2,107 +2,110 @@
 library(shiny)
 shinyServer <- function(input, output) {
   
-  xbar <- 1711
-  sd <- 93
-  upp <- xbar + 3 * sd
-  low <- xbar - 3 * sd
-  x.breaks <- round(seq(low,upp,sd))
+  
   
   getSummary <- function() {
-    ht <- as.numeric(input$yourheight) 
-    absdiff <- abs(xbar - ht)
-    d <- round((absdiff)/sd,2)
-    str0 <- paste('Population mean height =',xbar,'mm',sep=' ')
-    str1 <- paste('Population standard deviation =',sd,'mm',sep=' ') 
-    str2 <- paste('Your height =',input$yourheight,'mm',sep=' ')
-    str3 <- paste('Distance from the mean =',absdiff,'mm', sep=' ')
-    str4 <- paste('Distance from the mean in standard deviations =',
-                  '(distance from the mean)/(standard deviation) =' ,
-                  paste(absdiff,'/',sd,'=',sep=''),
-                  d,sep=' ')
-    result <- paste(str0,str1,str2,str3,str4,
-                    sep="<br>")
-    return(result)
+    input$goButton 
+    t <- timenow$t
+    P = round(input$N * input$pperc)
+    
+    l1 <- paste('True positives:',TP)
+    l2 <- paste('False positives:',FP)
+    l3 <- paste('True negatives:',TN)
+    l4 <- paste('False negatives:',FN)
+    l5 <- paste('Power:',round(TP/P,2))
+    l6 <- paste('FDR:',FP,'/(',FP,'+',TP,')=',   round(FP/(FP+TP),2))
+    result <- paste(l1,l2,l3,l4,l5,l6,sep="<BR>")
+    return(result)  
   } 
   
   
+   
+  FP <- 0
+  FN <- 0
+  TP <- 0
+  TN <- 0
+  
+  timenow <- reactiveValues(t=Sys.time())
+  
   output$plot1 <- renderPlot({ 
-    
-    p <- ggplot(data = data.frame(x = c(low, upp)), aes(x)
-    ) +
-      stat_function(fun = dnorm, show.legend=F,
-                    colour='red', 
-                    args = list(mean = xbar, sd = sd)) + 
-      ylab("") +
-      scale_x_continuous(breaks = x.breaks,minor_breaks=NULL) +
-      scale_y_continuous(breaks = NULL,minor_breaks=NULL,
-                         limits=c(0,0.005)) +
-      xlab("Height (mm)") + 
-      theme_grey((basesize=20))
-    
-    if (input$showsd) {
-      
-      p <- p +
-        geom_segment(x=xbar+2*sd,xend=xbar+3*sd,
-                   y=0.004,yend=0.004,
-                   colour='black',
-                   arrow = arrow(length=unit(0.30,"cm"), ends="both", type = "closed")
-      ) +
-        annotate("text", label = "1 standard deviation", 
-                 x = xbar+ 2.1*sd, 
-                 y= 0.0042, hjust=0,
-                 size = 5, colour = "black") +
-        annotate("text", label = '   This distance is', 
-                 x = xbar+ 2.1*sd, 
-                 y= 0.0045, hjust=0,
-                 size = 5, colour = "black") 
+    input$goButton
+    # experiments
+    N <- input$N
+    # number of p-values in the distribution
+    M <- 10000
+    u <- matrix(runif(N*M),nrow=M)
+    v <- apply(t(u),2,sort)
+    u
+    w <- t(v)
+    plot('',xlim=c(1,N),ylim=c(0,1))
+    for (i in 1:N) {
+      segments(x0=i,x1 = i,y0=quantile(probs=0.025,x=w[,i]),y1=quantile(w[,i],0.975))
     }
     
-    ht <- as.numeric(input$yourheight)
-    
-    
-    if (input$showmean) { 
-      p <- p + geom_segment(x=xbar,xend=xbar,
-                            y=-0.1,yend=0.00449,
-                            colour='red') +
-        annotate("text", label = "mean", 
-                 x = xbar-10, 
-                 y= 0.00475, hjust=0,
-                 size = 5, colour = "red")
-      
-    }
-    if (input$showyourheight) {
-      above.or.below <- 'below'
-      if (as.numeric(input$yourheight) > xbar) {
-        above.or.below <- 'above'
+    # N experiments, P true difference, N-P equal means
+    mu1 = input$mu
+    # number of experiments with a true difference
+    P = round(N * input$pperc)
+    # sample size
+    alpha <- input$alpha
+    S <- input$S
+    p.vals <- vector()
+    labels <- vector()
+    sd = input$sd
+    true.pos <- 0
+    true.neg <- 0
+    false.pos <- 0
+    false.neg <- 0
+    for (i in 1:N) {
+      if (i <= P) {
+        y1 <- rnorm(S,mu1,sd=sd)
+      } else {
+        y1 <- rnorm(S,0,sd=sd)
       }
-      d <- (as.numeric(input$yourheight)-xbar)/sd
-      d <- abs((round(100*d))/100)
-      str <- paste(d,'standard deviations',
-                   above.or.below,'the mean',sep=' ')
+      t <- t.test(y1)
       
-      pointdata <- data.frame(
-        x = c(as.numeric(input$yourheight)), 
-        ypos = c(0)
-      )
-      if (ht < 2510 & ht > 1200) {
+      # true difference
+      if (i <= P) {
+        if (t$p.value < alpha) {
+          true.pos <- true.pos + 1
+        } else {
+          false.neg <- false.neg + 1
+        }
+      }
+      if (i > P) {
+        if (t$p.value < alpha) {
+          false.pos <- false.pos + 1
+        } else {
+          true.neg <- true.neg + 1
+        }
+      }  
         
-        p <- p + geom_point(data = pointdata, colour='blue',
-                            mapping = 
-                              aes(x = x, y = ypos ),
-                            show.legend=F,
-                            shape = 24,
-                            fill='blue',
-                            size = 5
-                            
-        ) +
-          annotate("text", label = str, x = pointdata$x, 
-                   y= 0.0005, hjust=0,
-                   size = 5, colour = "blue") 
-         
+      FP <<- false.pos
+      FN <<- false.neg
+      TP <<- true.pos
+      TN <<- true.neg
+      
+      
+      p.vals[i] <- t$p.value
+      if (i <= P) {
+        labels[i] <- T
+      } else {
+        labels[i] <- F
       }
     }
-    p  
+    dp1 <- data.frame(p.vals = p.vals,
+                      labels = labels)
+    dp2 <- dp1[order(dp1$p.vals),]
+    for (i in 1:N) {
+      col <- 'red'
+      if (dp2$labels[i]==T) col <- 'blue'
+      points(i,dp2$p.vals[i],col=col)
+    }
+    abline(h=alpha,col='blue')
+    
+    timenow$t <- Sys.time()
+     
   }) # end plot1
   
   
@@ -112,7 +115,5 @@ shinyServer <- function(input, output) {
           "</font>")
   ) 
   
-  output$text1 <- renderText({ 
-    paste("input is","<font color=\"#FF0000\"><b>", input$n, "</b></font>") })
   
 }
