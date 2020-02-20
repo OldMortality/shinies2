@@ -22,7 +22,7 @@ shinyUI <- dashboardPage(
     sliderInput("S", label="Sample size (per group)", 
                 min=5, max=100, value=20, step = 1,
                 round = TRUE),
-    sliderInput("pperc", label="Proportion with true difference", 
+    sliderInput("pperc", label="Proportion of experiments with true difference", 
                 min=0, max=1, value=0.2, step = 0.01,
                 round = FALSE),
     sliderInput("alpha", label="alpha", 
@@ -34,7 +34,9 @@ shinyUI <- dashboardPage(
     sliderInput("sd", label="standard deviation ", 
                 min=0, max=2, value=0.5, step = 0.01,
                 round = FALSE),
-    actionButton("goButton", "run again")
+    numericInput("xlim", label="Show first N", value=20, min = 20, max = 1000, step = 1),
+    numericInput("ylim", label="Show max p", value=1, min = 0, max = 1, step = 0.01),
+    actionButton("goButton", "run simulation")
     
      
       ), 
@@ -49,11 +51,12 @@ shinyUI <- dashboardPage(
                 title="", 
                 width=NULL,
                 plotOutput("plot1", height = 350)), 
-              box( 
-                title="", 
-                width=NULL,
-                htmlOutput('summary')
-              )
+              # box( 
+              #   title="", 
+              #   width=NULL,
+              #   htmlOutput('summary')
+              # ),
+             DTOutput('table')
             )
       )
   )
