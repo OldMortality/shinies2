@@ -2,28 +2,33 @@ rm(list=ls())
 setwd('~/Documents/sweetman/rscripts')
 source('readData.R')
 
-d <- readData()
+d <- readData(scale=F)
 dim(d)
 # now we have a matrix of standardised medians.
 
 set.seed(20)
 
 
-mycluster <- kmeans(t(d[,]), 4, nstart=5000)
+mycluster <- kmeans(t(d[,]), 4, nstart=1000)
 mycluster
 mycluster$cluster
 cl <- mycluster$cluster
 cl[which(cl==1)]
 
 e <- t(d)
+e <- e[,]
 dim(e)
-e <- e[-6,]
-e <- e[-10,]
+mean(e[,200])
+var(e[,200])
 
-e.pca <- prcomp(e, center = TRUE,scale. = TRUE)
+
+e.pca <- prcomp(e, center = T, scale. = T)
+range(e[6,])
+range(e.pca$x[1,])
+
 summary(e.pca)
 plot(e.pca)
-
+par(mfrow=c(2,1))
 screeplot(e.pca)
 plot(e.pca$x[,1:2],col=c(rep('red',9),rep('black',7)))
 #points(e.pca$x[10,1],e.pca$x[10,2],pch='X')
@@ -33,6 +38,28 @@ head(loadings)
 barplot(loadings[,"PC1"])
 barplot(loadings[,"PC2"])
 
+plot3d(e.pca$x[,1:3],col = t.cols,size=10)
+
+library(dplyr)
+library(pipeR)
+a <- e.pca$rotation
+library(tibble)
+# show 15 most important rows for PC1
+a %>% as.data.frame %>% rownames_to_column %>% 
+  select(rowname, PC1, PC2) %>% arrange(desc(PC1)) %>%  head(15)
+
+
+a %>% as.data.frame %>% rownames_to_column %>% 
+  select(rowname, PC1, PC2) %>% arrange(desc(PC1)) %>>%  (~ z)
+
+
+head(z,15)  
+head(getGroupsByRows(z),15)
+
+
+# show 15 most important rows for PC2
+a %>% as.data.frame %>% rownames_to_column %>% 
+  select(rowname, PC1, PC2) %>% arrange(desc(PC2)) %>% head(15)
 
 
 
@@ -100,12 +127,13 @@ labels <- colnames(d)
 #colors = rainbow(length(unique(train$label)))
 #names(colors) = unique(labels)
 e <- t(d)
+dim(e)
 ## Executing the algorithm on curated data
 set.seed(20)
-ix <- sample(1:2970,100,replace=F)
+#ix <- sample(1:2970,100,replace=F)
 
 
-tsne <- Rtsne(e[,ix], dims = 2, perplexity=5, verbose=TRUE, max_iter = 500)
+tsne <- Rtsne(e[,], dims = 2, perplexity=5, verbose=TRUE, max_iter = 500)
 exeTimeTsne <- system.time(Rtsne(e[,ix], dims = 2, perplexity=5, verbose=TRUE, max_iter = 500))
 
 ## Plotting
@@ -116,8 +144,8 @@ t.cols <- c(rep('red',11),rep('black',9))
 t.cols[11] <- 'blue'
 t.cols[16] <- 'blue'
 
-tsne <- Rtsne(e[,ix], dims = 3, perplexity=5, verbose=TRUE, max_iter = 500)
-exeTimeTsne <- system.time(Rtsne(e[,ix], dims = 2, perplexity=5, verbose=TRUE, max_iter = 500))
+tsne <- Rtsne(e[,], dims = 3, perplexity=5, verbose=TRUE, max_iter = 500)
+exeTimeTsne <- system.time(Rtsne(e[,], dims = 2, perplexity=5, verbose=TRUE, max_iter = 500))
 
 ## Plotting
 t.cols
