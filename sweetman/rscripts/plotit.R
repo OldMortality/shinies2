@@ -13,36 +13,44 @@ fp <- d.plot[which(d.plot$x>11 & d.plot$y > 0.5),]
 fn <- d.plot[which(d.plot$x<12 & d.plot$y <= 0.5),]
 
 sz = 4
-delta.x = 0.3
-delta.y = 0.006
+delta.x = 0.2
+delta.y = 0.005
 
-ggplot(data=d.plot,aes(x=x,y=y,colour=subject)) + geom_point(cex=sz) + 
+blue.color <- "#042AF5"
+red.color <- "#EB3223"
+
+
+
+p <- ggplot(data=d.plot,aes(x=x,y=y,colour=subject)) + geom_point(cex=sz) + 
   geom_hline(yintercept=0.5,linetype='dotted') + 
   #  geom_vline(xintercept=11.5,linetype='dotted') + 
   labs(x='participant',y="Predicted probability of having the disease") + 
-  scale_color_manual(values=c("firebrick2", "darkgreen")) +
+  scale_color_manual(values=c(red.color, blue.color)) +
   theme(legend.position="none") +
   scale_x_continuous(breaks=seq(1,20),minor_breaks = seq(1,20),
                      labels = c('P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11',
                                 'C1','C2','C3','C4','C5','C6','C7','C8','C9')) +
   geom_line(data=data.frame(x=c(fp$x[1]-delta.x,fp$x[1]+delta.x),
-                            y=c(fp$y[1]+delta.y,fp$y[1]-delta.y)),colour='firebrick1') +
+                            y=c(fp$y[1]+delta.y,fp$y[1]-delta.y)),colour=red.color) +
   geom_line(data=data.frame(x=c(fp$x[2]-delta.x,fp$x[2]+delta.x),
-                            y=c(fp$y[2]+delta.y,fp$y[2]-delta.y)),colour='firebrick1') +
-  geom_line(data=data.frame(x=c(fp$x[3]-delta.x,fp$x[3]+delta.x),
-                            y=c(fp$y[3]+delta.y,fp$y[3]-delta.y)),colour='firebrick1') +
+                            y=c(fp$y[2]+delta.y,fp$y[2]-delta.y)),colour=red.color) +
+  #geom_line(data=data.frame(x=c(fp$x[3]-delta.x,fp$x[3]+delta.x),
+  #                          y=c(fp$y[3]+delta.y,fp$y[3]-delta.y)),colour=blue.color) +
   geom_line(data=data.frame(x=c(fp$x[1]-delta.x,fp$x[1]+delta.x),
-                            y=c(fp$y[1]-delta.y,fp$y[1]+delta.y)),colour='firebrick1') +
+                            y=c(fp$y[1]-delta.y,fp$y[1]+delta.y)),colour=red.color) +
   geom_line(data=data.frame(x=c(fp$x[2]-delta.x,fp$x[2]+delta.x),
-                            y=c(fp$y[2]-delta.y,fp$y[2]+delta.y)),colour='firebrick1') +
-  geom_line(data=data.frame(x=c(fp$x[3]-delta.x,fp$x[3]+delta.x),
-                            y=c(fp$y[3]-delta.y,fp$y[3]+delta.y)),colour='firebrick1')+
+                            y=c(fp$y[2]-delta.y,fp$y[2]+delta.y)),colour=red.color) +
+  #geom_line(data=data.frame(x=c(fp$x[3]-delta.x,fp$x[3]+delta.x),
+  #                          y=c(fp$y[3]-delta.y,fp$y[3]+delta.y)),colour=blue.color)+
   geom_line(data=data.frame(x=c(fn$x[1]-delta.x,fn$x[1]+delta.x),
-                            y=c(fn$y[1]-delta.y,fn$y[1]+delta.y)),colour='darkgreen') +
+                            y=c(fn$y[1]-delta.y,fn$y[1]+delta.y)),colour=blue.color) +
   geom_line(data=data.frame(x=c(fn$x[1]-delta.x,fn$x[1]+delta.x),
-                          y=c(fn$y[1]+delta.y,fn$y[1]-delta.y)),colour='darkgreen')
+                          y=c(fn$y[1]+delta.y,fn$y[1]-delta.y)),colour=blue.color)
 
+p
 
+ggsave(p,file='~/Documents/sweetman/rscripts/xval.jpeg',device="jpeg",dpi=800,
+       width=120,height=100,units='mm')
 
 ### legend
 d=0.2
@@ -55,29 +63,29 @@ d.l <- data.frame(x=c(0,0,0,0),
 )
 
 
-delta.x = 0.15
-delta.y = 0.018
-ggplot(data=d.l,aes(x=x,y=y,colour=col)) + geom_point(cex=sz) +
+delta.x = 0.25
+delta.y = 0.02
+pl <- ggplot(data=d.l,aes(x=x,y=y,colour=col)) + geom_point(cex=sz) +
   coord_cartesian(xlim =c(0, 14), ylim = c(0, 3)) +
   geom_text(aes(label=label,x=x1,y=y),colour=d.l$col2) +
   
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  scale_color_manual(values=c("darkgreen","firebrick2" )) +
+  scale_color_manual(values=c(blue.color,red.color )) +
   theme(legend.position="none") +
   theme(line = element_blank(),
         text = element_blank(),
         title = element_blank()) +
   geom_line(data=data.frame(x=c(d.l$x[1] + delta.x,0 + d.l$x[1] -delta.x),
-                            y=c(d.l$y[1] + delta.y, d.l$y[1]-delta.y)),colour='firebrick1') +
+                            y=c(d.l$y[1] + delta.y, d.l$y[1]-delta.y)),colour=red.color) +
   geom_line(data=data.frame(x=c(d.l$x[1] + delta.x,0 + d.l$x[1] -delta.x),
-                            y=c(d.l$y[1] - delta.y, d.l$y[1]+delta.y)),colour='firebrick1') +
+                            y=c(d.l$y[1] - delta.y, d.l$y[1]+delta.y)),colour=red.color) +
   geom_line(data=data.frame(x=c(d.l$x[1] + delta.x,0 + d.l$x[1] -delta.x),
-                            y=c(d.l$y[3] + delta.y, d.l$y[3]-delta.y)),colour='darkgreen') +
+                            y=c(d.l$y[3] + delta.y, d.l$y[3]-delta.y)),colour=blue.color) +
   geom_line(data=data.frame(x=c(d.l$x[1] + delta.x,0 + d.l$x[1] -delta.x),
-                            y=c(d.l$y[3] - delta.y, d.l$y[3]+delta.y)),colour='darkgreen') 
+                            y=c(d.l$y[3] - delta.y, d.l$y[3]+delta.y)),colour=blue.color) 
 
-
+pl
 
 
 
